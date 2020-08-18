@@ -1,9 +1,11 @@
-import React, { useEffect , useState } from 'react'
+import React, { useEffect , useState , useRef } from 'react'
 import AceEditor from 'react-ace' 
+import * as Component from '@material-ui/core'
 import queryString from 'querystring'
 import {makeStyles} from '@material-ui/core/styles'
 import "ace-builds/src-noconflict/mode-java";
-import "ace-builds/src-noconflict/theme-xcode";
+import "ace-builds/src-noconflict/theme-dracula";
+import './code_editor.css'
 //@ts-ignore
 import io from 'socket.io-client'
 import Firebase from '../../contexts/Firebase/Firebase'
@@ -13,8 +15,7 @@ const useStyles=makeStyles({
     root:{
         display:'flex',
         flexDirection:'row',
-        justifyContent:'space-around',
-        height:'100vh',
+        justifyContent:'space-between',
         alignItems:'center',
     },
     themed_button: {
@@ -25,35 +26,81 @@ const useStyles=makeStyles({
         color: 'white',
         height: 48,
         padding: '0 30px',
-      },
+    },
+    navbar_theme:{
+        height:'10vh',
+        position:'relative',
+        top:'0px'
+    },
+    parent:{
+        display:'flex',
+        flexDirection:'column',
+        justifyContent:'space-between',
+        gridGap: "2vh"
+    },
 })
 const OtherInstanceUser=()=>{
     const classes=useStyles()
     return(
-    <div className={classes.themed_button}>
+    <div className='users_online_grid'>
 
     </div>
     )
 }
-const Canvas=()=>{
-    const classes=useStyles()
-    return(
-        <div>
-            Canvas will be placed here
-        </div>
-    )
-}
+
 export default()=>{
+    const canvasRef = useRef(null)
+    const [checked,setChecked]=useState<any>(true)
+    const [color,setColor]=useState<any>('black')
+    const contextRef = useRef(null)
+    const [users,setUsers]=useState<any[]>([])
     const [name,setName]=useState<any>('')
     const [room,setRoom]=useState<any>('')
     const [joinMessage,SetJoinMessage]=useState<any>('')
     const [fillCode,setFillCode]=useState<any>('')
+    const [isDrawing,SetIsDrawing]=useState<any>(false)
     const firebase = new Firebase()
     const handleSave=(value:any)=>{
         socket.emit('code_request',{name,room,value},(error:any)=>{
             if(error)
             alert(error)
         })
+    }
+    const handleEraser=(e:any)=>{
+        if(checked)
+        {setChecked(false)}
+        else{
+        //@ts-ignore    
+        setChecked(true);
+        }
+    }
+    //@ts-ignore
+    const startDrawing=({nativeEvent})=>{
+        const {offsetX,offsetY}=nativeEvent;
+        //@ts-ignore
+        contextRef.current.beginPath()
+        //@ts-ignore
+        contextRef.current.moveTo(offsetX,offsetY)
+        SetIsDrawing(true)
+    }
+    const finishDrawing=()=>{
+        //@ts-ignore
+        contextRef.current.closePath()
+        SetIsDrawing(false)
+    }
+    //@ts-ignore
+    const draw=({nativeEvent})=>{
+        if(!isDrawing)
+        {
+            return;
+        }
+        const{offsetX,offsetY}=nativeEvent
+        //@ts-ignore
+        contextRef.current.lineTo(offsetX,offsetY)
+        //@ts-ignore
+        contextRef.current.stroke()
+        //@ts-ignore
+        console.log('drawingnnnnn')
     }
     useEffect(()=>{
     const parsed=queryString.parse(window.location.search.slice(1))
@@ -62,40 +109,90 @@ export default()=>{
     socket=io(ENDPOINT)
     setRoom(parsed.room)
     setName(parsed.name)
-            socket.emit('join',queryString.parse(
-                window.location.search.slice(1)
-                ),(error:any)=>{
-                if(error)
-                alert(error)
-            })        
+    socket.emit('join',
+        queryString.parse(
+        window.location.search.slice(1)
+        ),(error:any)=>{    
+        if(error)
+        alert(error)
+        }
+    )        
     if(secrets.username!==parsed.name && secrets.room_id!==parsed.room)
-            {
-                alert('opened in different instance')
-            }
+        alert('opened in different instance')
     },[ENDPOINT])
     useEffect(()=>{
         socket.on('receive',(data:any)=>{
             setFillCode(data)
         })
     })
+    useEffect(()=>{
+        const canvas = canvasRef.current;
+        //@ts-ignore
+        canvas.height=window.innerHeight;canvas.width=window.innerWidth/2;
+        //@ts-ignore
+        const context = canvas.getContext('2d')
+        context.lineCap='round'
+        context.strokeStyle='black'
+        context.lineWidth=5
+        console.log(color)
+        contextRef.current = context;
+    },[checked])
     const classes=useStyles()
     return(
         <div className={classes.root}>
             <OtherInstanceUser
-            
+
             />
-            <AceEditor
-            mode='c'
-            theme="xcode"
-            onChange={handleSave}
-            name="hey_boi"
-            value={fillCode}
-            editorProps={{$blockScrolling:true}}
+            <div>
+                <Component.AppBar 
+                position='static' 
+                className={classes.navbar_theme}>
+                    <Component.Container >
+                    <div className={`${classes.root} adjust_top`}>
+                    <select>
+                    <option>languages</option>
+                    </select>
+                    <select>
+                    <option>Themes</option>
+                    </select>
+                    <Component.Switch className="slider"/>  
+                    </div>  
+                    </Component.Container>
+                </Component.AppBar>    
+                <AceEditor
+                mode='java'
+                theme="dracula"
+                onChange={handleSave}
+                name="hey_boi"
+                className='ace_editor'
+                value={fillCode}
+                editorProps={{$blockScrolling:true}}
+                />
+            </div>
+            <Component.Grid item xs className={classes.parent} >
+            <Component.Paper className='side-boxes' elevation={2}>
+            <section className="console-headers">
+                <Component.Switch
+                onChange={handleEraser}
+                checked={checked}
+                />
+                LOGIC CONSOLE
+                <span className="secondary-header">
+                    (You Can Draw your logic Here to Visualise)
+                </span>
+            </section>
+            <canvas
+                onMouseDown={startDrawing}
+                onMouseUp={finishDrawing}
+                onMouseMove={draw}
+                ref={canvasRef}
+                className="canvas"
             />
-            <Canvas
-            
-            />
+            </Component.Paper>
+            <Component.Paper className="side-boxes" elevation={2}>
+            <section className="console-headers">OUTPUT CONSOLE</section>
+            </Component.Paper>
+            </Component.Grid>
         </div>
-        
     )
 }
