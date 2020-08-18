@@ -2,7 +2,7 @@ import React, { useEffect , useState , useRef } from 'react'
 import AceEditor from 'react-ace' 
 import * as Component from '@material-ui/core'
 import queryString from 'querystring'
-import {makeStyles} from '@material-ui/core/styles'
+import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/theme-dracula";
 import './code_editor.css'
@@ -39,6 +39,14 @@ const useStyles=makeStyles({
         gridGap: "2vh"
     },
 })
+const useStyles2 = makeStyles((theme: Theme) =>
+  createStyles({
+    formControl: {
+      margin: theme.spacing(0),
+      minWidth: 120,
+    },
+  }),
+);
 const OtherInstanceUser=()=>{
     const classes=useStyles()
     return(
@@ -50,6 +58,8 @@ const OtherInstanceUser=()=>{
 
 export default()=>{
     const canvasRef = useRef(null)
+    const [ideLanguage,SetIdeLanguage]=useState<any>('C++')
+    const [theme,setTheme]=useState<any>('')
     const [checked,setChecked]=useState<any>(true)
     const [color,setColor]=useState<any>('black')
     const contextRef = useRef(null)
@@ -66,13 +76,11 @@ export default()=>{
             alert(error)
         })
     }
-    const handleEraser=(e:any)=>{
-        if(checked)
-        {setChecked(false)}
-        else{
-        //@ts-ignore    
-        setChecked(true);
-        }
+    const handleIdeLang=(e:any)=>{
+        SetIdeLanguage(e.target.value)
+    }
+    const handleTheme=()=>{
+
     }
     //@ts-ignore
     const startDrawing=({nativeEvent})=>{
@@ -117,14 +125,16 @@ export default()=>{
         alert(error)
         }
     )        
+    console.log('called')
     if(secrets.username!==parsed.name && secrets.room_id!==parsed.room)
-        alert('opened in different instance')
-    },[ENDPOINT])
+        alert('opened in different instance')   
+    },[ENDPOINT,name,room])
     useEffect(()=>{
         socket.on('receive',(data:any)=>{
             setFillCode(data)
         })
-    })
+        console.log('callleddllll')
+    },[fillCode])
     useEffect(()=>{
         const canvas = canvasRef.current;
         //@ts-ignore
@@ -132,12 +142,12 @@ export default()=>{
         //@ts-ignore
         const context = canvas.getContext('2d')
         context.lineCap='round'
-        context.strokeStyle='black'
-        context.lineWidth=5
-        console.log(color)
+        context.strokeStyle={color}
+        context.lineWidth=1
         contextRef.current = context;
-    },[checked])
+    },[color])
     const classes=useStyles()
+    const classes2=useStyles2()
     return(
         <div className={classes.root}>
             <OtherInstanceUser
@@ -149,13 +159,33 @@ export default()=>{
                 className={classes.navbar_theme}>
                     <Component.Container >
                     <div className={`${classes.root} adjust_top`}>
-                    <select>
-                    <option>languages</option>
-                    </select>
-                    <select>
-                    <option>Themes</option>
-                    </select>
-                    <Component.Switch className="slider"/>  
+                    <Component.FormControl className={classes2.formControl}>
+                    <Component.InputLabel id="languages" className="label-up">Languages</Component.InputLabel>
+                    <Component.Select
+                    labelId="demo-simple-select-label"
+                    id="demo-mutiple-name-label select-input"
+                    value={ideLanguage}
+                    onChange={handleIdeLang}
+                    >
+                    <Component.MenuItem value='C'>C</Component.MenuItem>
+                    <Component.MenuItem value='C++'>C++</Component.MenuItem>
+                    <Component.MenuItem value='Python'>Python</Component.MenuItem>
+                    <Component.MenuItem value='Java' >Java</Component.MenuItem>
+                    <Component.MenuItem value="Javascript" >Javascript</Component.MenuItem>
+                    </Component.Select>
+                    </Component.FormControl>
+                    <Component.FormControl className={classes2.formControl}>
+                    <Component.InputLabel id="themes" className="label-up">Themes</Component.InputLabel>
+                    <Component.Select
+                     label="age"
+                     labelId='age'
+                     id="demo-mutiple-name-label select-input"
+                     value={theme}
+                     onChange={handleTheme}
+                    >
+                    <Component.MenuItem>languages</Component.MenuItem>
+                    </Component.Select>
+                    </Component.FormControl>
                     </div>  
                     </Component.Container>
                 </Component.AppBar>    
@@ -172,10 +202,6 @@ export default()=>{
             <Component.Grid item xs className={classes.parent} >
             <Component.Paper className='side-boxes' elevation={2}>
             <section className="console-headers">
-                <Component.Switch
-                onChange={handleEraser}
-                checked={checked}
-                />
                 LOGIC CONSOLE
                 <span className="secondary-header">
                     (You Can Draw your logic Here to Visualise)
@@ -191,6 +217,13 @@ export default()=>{
             </Component.Paper>
             <Component.Paper className="side-boxes" elevation={2}>
             <section className="console-headers">OUTPUT CONSOLE</section>
+            <AceEditor
+                mode='java'
+                theme="dracula"
+                name="hey_boi"
+                className='ace_output'
+                editorProps={{$blockScrolling:true}}
+                />
             </Component.Paper>
             </Component.Grid>
         </div>

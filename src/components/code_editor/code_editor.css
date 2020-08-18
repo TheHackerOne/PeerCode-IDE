@@ -9,6 +9,11 @@ body{
     top: 1px !important;
     width: 50vw !important;
 }
+.console-slider{
+    position: absolute;
+    top: -5px;
+    right: 1vh !important;
+}
 .canvas{
     height: 100vh;
 }
@@ -32,8 +37,17 @@ body{
     justify-content: center;
     background-color: #0b67bd;
 }
+
+.label-up{
+    color: white !important;
+}
 .secondary-header{
     font-weight: 100;
     position: relative;
     left: 2%;
+}
+.ace_output{
+    width: 45vw !important;
+}
+.menu{
 }
