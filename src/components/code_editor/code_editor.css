@@ -14,15 +14,20 @@ body{
     top: -5px;
     right: 1vh !important;
 }
+.indiv_list_item{
+    color: white !important;
+}
 .canvas{
     height: 100vh;
 }
 .adjust_top{
     margin-top:3%;
 }
+.canvas_parent{
+    border-radius: 20px !important;
+}
 .side-boxes{
-    border-radius: 0px !important;
-    height: 46vh;
+    height: 50vh;
     position: relative;
     top: 1px;
     left: 2vw;
@@ -37,7 +42,12 @@ body{
     justify-content: center;
     background-color: #0b67bd;
 }
-
+.our_lovely_canvas{
+    height: 50vh !important;
+    overflow:scroll;
+    overflow-x: scroll;
+    border-radius: 20px !important;
+}
 .label-up{
     color: white !important;
 }
@@ -46,8 +56,15 @@ body{
     position: relative;
     left: 2%;
 }
+.eraser{
+    position: absolute;
+}
 .ace_output{
     width: 45vw !important;
 }
-.menu{
+.brush_icon{
+ position: absolute !important;
+}
+.brush-icon-div{
+    position: absolute;
 }

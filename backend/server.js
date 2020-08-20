@@ -37,6 +37,17 @@ var newConnection=(socket)=>{
         socket.to(data.room).broadcast.emit('receive',data.value)
         callback()
     })
+    socket.on('canvas_test',(data)=>{
+        socket.to(data.room).broadcast.emit('canvas_test_rec',data)
+    })
+    socket.on('canvas_point_push',(data)=>{
+        socket.to(data.room).broadcast.emit('canvas_point_push_rec',data)
+    })
+    socket.on('handle_end_draw',(data)=>{
+        socket.to(data).broadcast.emit('canvas_end_draw',data)
+    })
+    
+
 }
 io.sockets.on('connection',newConnection)
 server.listen(5000,()=>{

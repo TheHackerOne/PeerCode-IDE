@@ -4,13 +4,24 @@ import * as Component from '@material-ui/core'
 import queryString from 'querystring'
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import "ace-builds/src-noconflict/mode-java";
+import "ace-builds/src-noconflict/mode-c_cpp";
+import "ace-builds/src-noconflict/mode-javascript";
+import "ace-builds/src-noconflict/mode-python";
 import "ace-builds/src-noconflict/theme-dracula";
+import 'ace-builds/src-noconflict/theme-xcode'
+import {Brush} from '@material-ui/icons'
 import './code_editor.css'
+import Sketch from 'react-p5'
+import p5Types from 'p5'
 //@ts-ignore
 import io from 'socket.io-client'
 import Firebase from '../../contexts/Firebase/Firebase'
+import IOSSwitch from './IosSwitch' 
 var socket:any;
 let ENDPOINT='http://localhost:5000';
+var drawing_points:any[]=[];
+var current_path:any[]=[];
+var row=0,column=0;
 const useStyles=makeStyles({
     root:{
         display:'flex',
@@ -35,7 +46,6 @@ const useStyles=makeStyles({
     parent:{
         display:'flex',
         flexDirection:'column',
-        justifyContent:'space-between',
         gridGap: "2vh"
     },
 })
@@ -58,9 +68,13 @@ const OtherInstanceUser=()=>{
 
 export default()=>{
     const canvasRef = useRef(null)
-    const [ideLanguage,SetIdeLanguage]=useState<any>('C++')
-    const [theme,setTheme]=useState<any>('')
-    const [checked,setChecked]=useState<any>(true)
+    const [peerDraw,handlepeer]=useState<any>('')
+    const [eraser,setEraser]=useState<any>(true)
+    const [native,setNative]=useState<any>(false)
+    const [ideLanguage,SetIdeLanguage]=useState<any>('c_cpp')
+    const [theme,setTheme]=useState<any>('dracula')
+    const [strokeWeight,setStrokeWeight]=useState<any>(4)
+    const [checked,setChecked]=useState<any>(false)
     const [color,setColor]=useState<any>('black')
     const contextRef = useRef(null)
     const [users,setUsers]=useState<any[]>([])
@@ -69,7 +83,56 @@ export default()=>{
     const [joinMessage,SetJoinMessage]=useState<any>('')
     const [fillCode,setFillCode]=useState<any>('')
     const [isDrawing,SetIsDrawing]=useState<any>(false)
+    const [darkMode,setDarkMode]=useState<any>('white')
     const firebase = new Firebase()
+
+    //p5 commands..
+    const setup = (p5 : p5Types , canvasRef : Element ) =>{
+        p5.createCanvas(1000,1000).parent(canvasRef)
+    }
+    const draw = ( p5 : p5Types ) => {
+        p5.background(darkMode);
+        p5.stroke(color);
+        p5.strokeWeight(strokeWeight)
+        p5.noFill();
+            drawing_points.forEach(Rowpoints=>{
+                p5.beginShape();
+                Rowpoints.forEach((indivPoints:any)=>{
+                    p5.vertex(indivPoints.x,indivPoints.y)
+                })
+                p5.endShape()
+            })
+    }
+    const handleEraser=()=>{
+        if(eraser){
+        setStrokeWeight(10)
+        setEraser(false)
+        setColor('white')
+        }
+        else{
+        setEraser(true)
+        setColor('black')
+        setStrokeWeight(3)
+        }
+    }
+    const handleCheck=()=>{
+        if(checked)
+        setChecked(false)
+        else
+        setChecked(true)
+        if(theme=='dracula')
+        setTheme('xcode')
+        else
+        setTheme('dracula')
+    }
+    const clearArray=()=>{
+        current_path=[]
+        // socket.emit('handle_end_draw',{room})
+    }
+    const realtimeDraw=()=>{
+        drawing_points.push(current_path)
+        // socket.emit('canvas_point_push',{current_path,room})
+    }
     const handleSave=(value:any)=>{
         socket.emit('code_request',{name,room,value},(error:any)=>{
             if(error)
@@ -80,36 +143,18 @@ export default()=>{
         SetIdeLanguage(e.target.value)
     }
     const handleTheme=()=>{
-
+       
     }
     //@ts-ignore
-    const startDrawing=({nativeEvent})=>{
-        const {offsetX,offsetY}=nativeEvent;
+    const test = (e) => {
         //@ts-ignore
-        contextRef.current.beginPath()
-        //@ts-ignore
-        contextRef.current.moveTo(offsetX,offsetY)
-        SetIsDrawing(true)
+        handlepeer('started')
+        console.log(e)
+        const mouse_points={x:e.mouseX,y:e.mouseY}
+        current_path.push(mouse_points)
+        // socket.emit('canvas_test',{mouse_points,room})
     }
-    const finishDrawing=()=>{
-        //@ts-ignore
-        contextRef.current.closePath()
-        SetIsDrawing(false)
-    }
-    //@ts-ignore
-    const draw=({nativeEvent})=>{
-        if(!isDrawing)
-        {
-            return;
-        }
-        const{offsetX,offsetY}=nativeEvent
-        //@ts-ignore
-        contextRef.current.lineTo(offsetX,offsetY)
-        //@ts-ignore
-        contextRef.current.stroke()
-        //@ts-ignore
-        console.log('drawingnnnnn')
-    }
+    
     useEffect(()=>{
     const parsed=queryString.parse(window.location.search.slice(1))
     //@ts-ignore
@@ -125,33 +170,33 @@ export default()=>{
         alert(error)
         }
     )        
-    console.log('called')
     if(secrets.username!==parsed.name && secrets.room_id!==parsed.room)
         alert('opened in different instance')   
     },[ENDPOINT,name,room])
+
     useEffect(()=>{
         socket.on('receive',(data:any)=>{
             setFillCode(data)
         })
         console.log('callleddllll')
+        
     },[fillCode])
-    useEffect(()=>{
-        const canvas = canvasRef.current;
-        //@ts-ignore
-        canvas.height=window.innerHeight;canvas.width=window.innerWidth/2;
-        //@ts-ignore
-        const context = canvas.getContext('2d')
-        context.lineCap='round'
-        context.strokeStyle={color}
-        context.lineWidth=1
-        contextRef.current = context;
-    },[color])
+    // useEffect(()=>{
+    //     socket.on('canvas_test_rec',(data:any)=>{
+    //         current_path.push(data.mouse_points)
+    //     })
+    //     socket.on('canvas_point_push_rec',(data:any)=>{
+    //         drawing_points.push(data.mouse_points)
+    //     })
+    //     socket.on('canvas_end_draw',(data:any)=>{
+    //         clearArray()
+    //     })
+    // },[peerDraw,color])
     const classes=useStyles()
     const classes2=useStyles2()
     return(
         <div className={classes.root}>
             <OtherInstanceUser
-
             />
             <div>
                 <Component.AppBar 
@@ -166,32 +211,22 @@ export default()=>{
                     id="demo-mutiple-name-label select-input"
                     value={ideLanguage}
                     onChange={handleIdeLang}
+                    className="indiv_list_item"
                     >
-                    <Component.MenuItem value='C'>C</Component.MenuItem>
-                    <Component.MenuItem value='C++'>C++</Component.MenuItem>
-                    <Component.MenuItem value='Python'>Python</Component.MenuItem>
-                    <Component.MenuItem value='Java' >Java</Component.MenuItem>
-                    <Component.MenuItem value="Javascript" >Javascript</Component.MenuItem>
+                    <Component.MenuItem value='c_cpp' >C</Component.MenuItem>
+                    <Component.MenuItem value='c_cpp' >C++</Component.MenuItem>
+                    <Component.MenuItem value='python'>Python</Component.MenuItem>
+                    <Component.MenuItem value='java' >Java</Component.MenuItem>
+                    <Component.MenuItem value="javascript"  >Javascript</Component.MenuItem>
                     </Component.Select>
                     </Component.FormControl>
-                    <Component.FormControl className={classes2.formControl}>
-                    <Component.InputLabel id="themes" className="label-up">Themes</Component.InputLabel>
-                    <Component.Select
-                     label="age"
-                     labelId='age'
-                     id="demo-mutiple-name-label select-input"
-                     value={theme}
-                     onChange={handleTheme}
-                    >
-                    <Component.MenuItem>languages</Component.MenuItem>
-                    </Component.Select>
-                    </Component.FormControl>
+                    <Component.Switch checked={checked} onChange={handleCheck} name="checkedB" />
                     </div>  
                     </Component.Container>
                 </Component.AppBar>    
                 <AceEditor
-                mode='java'
-                theme="dracula"
+                mode={ideLanguage}
+                theme={theme}
                 onChange={handleSave}
                 name="hey_boi"
                 className='ace_editor'
@@ -200,20 +235,14 @@ export default()=>{
                 />
             </div>
             <Component.Grid item xs className={classes.parent} >
-            <Component.Paper className='side-boxes' elevation={2}>
-            <section className="console-headers">
-                LOGIC CONSOLE
-                <span className="secondary-header">
-                    (You Can Draw your logic Here to Visualise)
-                </span>
-            </section>
-            <canvas
-                onMouseDown={startDrawing}
-                onMouseUp={finishDrawing}
-                onMouseMove={draw}
-                ref={canvasRef}
-                className="canvas"
-            />
+            <Component.Paper className='side-boxes canvas_parent' elevation={2}>
+            <Component.Switch checked={eraser} onChange={handleEraser} name="checkedB" className="eraser"/>
+            <Sketch setup={setup} 
+            draw={draw}  
+            className="our_lovely_canvas"
+            mouseDragged={test} 
+            mousePressed={realtimeDraw}
+            mouseReleased={clearArray}/>
             </Component.Paper>
             <Component.Paper className="side-boxes" elevation={2}>
             <section className="console-headers">OUTPUT CONSOLE</section>
