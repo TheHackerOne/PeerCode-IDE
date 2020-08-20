@@ -6,7 +6,7 @@
 
 You have a Seperate **Canvas Board** where you can discuss your logic by noting them down to that canvas and other user in **RealTime** will also be able to see them. ( Thanks to the Socket.io Library 🌞 )
 
-You can share your Code Link and When other user Edits your code you will be able to see the code manipulation Live.(Still not able to handle multiple Users)
+You can share your Code Link and When other user Edits your code you will be able to see the code manipulation Live.
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
