@@ -1,4 +1,4 @@
-# **Are You Bored of Sharing Code on Chats 📱 and getting them back from friends 📟 after edit and still the code doesn't works**😕
+﻿# **Are You Bored of Sharing Code on Chats 📱 and getting them back from friends 📟 after edit and still the code doesn't works**😕
 ......still this cycle goes endless 🌌
 
 ## *So thats Why i Built this Collaborative Coding IDE WebApp*
@@ -76,3 +76,5 @@ This section has moved here: https://facebook.github.io/create-react-app/docs/de
 ### `yarn build` fails to minify
 
 This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+
+### yash chaudhary
